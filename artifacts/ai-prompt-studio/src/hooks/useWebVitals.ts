@@ -128,7 +128,8 @@ function measureINP() {
     }
   });
   try {
-    observer.observe({ type: "event", durationThreshold: 16, buffered: true });
+    // durationThreshold is valid per the EventTiming spec but not yet in all TS DOM typings
+    observer.observe({ type: "event", durationThreshold: 16, buffered: true } as PerformanceObserverInit);
     window.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden" && maxINP > 0) {
         sendVital("INP", maxINP);

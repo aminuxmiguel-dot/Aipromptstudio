@@ -8,9 +8,10 @@ import {
   useGetTool, 
   useGeneratePrompt, 
   useSaveHistory, 
-  GeneratedPrompt 
+  GeneratedPrompt,
+  getGetToolQueryKey,
+  getListHistoryQueryKey,
 } from "@workspace/api-client-react";
-import { getListHistoryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,7 @@ import { GeneratedPromptCard } from "@/components/tool/GeneratedPromptCard";
 import { QualityScorePanel } from "@/components/tool/QualityScorePanel";
 import { PromptFragmentsView } from "@/components/tool/PromptFragmentsView";
 import { ToolSeoContent } from "@/components/tool/ToolSeoContent";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export default function ToolPage() {
   const params = useParams();
@@ -33,7 +35,7 @@ export default function ToolPage() {
   const queryClient = useQueryClient();
 
   const { data: tool, isLoading: isToolLoading, isError: isToolError } = useGetTool(slug, {
-    query: { enabled: !!slug }
+    query: { enabled: !!slug, queryKey: getGetToolQueryKey(slug) }
   });
 
   const generatePrompt = useGeneratePrompt();
@@ -237,6 +239,9 @@ export default function ToolPage() {
                 onSubmit={handleGenerate} 
                 isLoading={generatePrompt.isPending} 
               />
+
+              {/* Sidebar ad slot — below the form */}
+              <AdSlot slotId="tool-sidebar-rectangle" format="rectangle" responsive />
             </div>
             
             {/* Right Column: Output Canvas */}
