@@ -2,7 +2,6 @@ import { useEffect, useRef, lazy, Suspense } from "react";
 import { useWebVitals } from "@/hooks/useWebVitals";
 import { Loader2 } from 'lucide-react';
 import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -19,15 +18,12 @@ const SeoPage = lazy(() => import('./pages/SeoPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const NotFound = lazy(() => import('./pages/not-found'));
 
-// Clerk publishable key — derived from hostname (Replit proxy) or env var.
-// May be null in dev environments without Clerk configured.
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+// Clerk publishable key — only from explicit env var.
+// When absent the app runs in "auth-less" mode: all prompt generation
+// features work, sign-in/sign-up pages are hidden. Never auto-derived
+// from hostname to avoid loading Clerk JS on unconfigured environments.
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
-// When no Clerk key is available the app runs in "auth-less" mode:
-// all prompt generation features work, sign-in/sign-up pages are hidden.
 const hasClerk = !!clerkPubKey;
 
 // Empty in dev (intentional), auto-set in prod via Replit Clerk proxy.
