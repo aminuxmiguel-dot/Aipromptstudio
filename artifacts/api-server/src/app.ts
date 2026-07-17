@@ -44,14 +44,19 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+// Only apply Clerk middleware when CLERK_SECRET_KEY is configured.
+// Without it every request would crash with "Missing Clerk Secret Key",
+// blocking public endpoints (/api/stats, /api/tools, /api/analytics, etc.).
+if (process.env.CLERK_SECRET_KEY) {
+  app.use(
+    clerkMiddleware((req) => ({
+      publishableKey: publishableKeyFromHost(
+        getClerkProxyHost(req) ?? "",
+        process.env.CLERK_PUBLISHABLE_KEY,
+      ),
+    })),
+  );
+}
 
 // Root-level routes: sitemap, robots.txt, /api/seo/audit
 app.use(sitemapRouter);

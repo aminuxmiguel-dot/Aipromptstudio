@@ -1,14 +1,14 @@
 import { useEffect, useRef, lazy, Suspense } from "react";
 import { useWebVitals } from "@/hooks/useWebVitals";
 import { Loader2 } from 'lucide-react';
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from 'next-themes';
-import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
+import { Switch, Route, useLocation, Router as WouterRouter } from 'wouter';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ToolPage = lazy(() => import('./pages/ToolPage'));
@@ -16,15 +16,21 @@ const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const SeoPage = lazy(() => import('./pages/SeoPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 const NotFound = lazy(() => import('./pages/not-found'));
 
-// REQUIRED — copy verbatim
+// Clerk publishable key — derived from hostname (Replit proxy) or env var.
+// May be null in dev environments without Clerk configured.
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-// REQUIRED — copy verbatim. Empty in dev (intentional), auto-set in prod.
+// When no Clerk key is available the app runs in "auth-less" mode:
+// all prompt generation features work, sign-in/sign-up pages are hidden.
+const hasClerk = !!clerkPubKey;
+
+// Empty in dev (intentional), auto-set in prod via Replit Clerk proxy.
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -33,10 +39,6 @@ function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
     ? path.slice(basePath.length) || "/"
     : path;
-}
-
-if (!clerkPubKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 }
 
 const clerkAppearance = {
@@ -89,6 +91,7 @@ const clerkAppearance = {
   },
 };
 
+/** Clears React Query cache when the Clerk user changes. Only rendered inside ClerkProvider. */
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const queryClient = useQueryClient();
@@ -137,34 +140,46 @@ function PageLoader() {
 
 const queryClient = new QueryClient();
 
+/** Core route table — works with or without Clerk. */
 function AppRouter() {
   useWebVitals();
   return (
-    <>
-      <ClerkQueryClientCacheInvalidator />
-      <Suspense fallback={<PageLoader />}>
-        <Switch>
-          <Route path="/" component={HomePage} />
-          <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/tools/:slug" component={ToolPage} />
-          <Route path="/history" component={HistoryPage} />
-          <Route path="/favorites" component={FavoritesPage} />
-          <Route path="/analytics" component={AnalyticsPage} />
-          <Route path="/seo" component={SeoPage} />
-          <Route component={NotFound} />
-        </Switch>
-      </Suspense>
-    </>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={HomePage} />
+        {/* Sign-in / sign-up only available when Clerk is configured */}
+        {hasClerk && <Route path="/sign-in/*?" component={SignInPage} />}
+        {hasClerk && <Route path="/sign-up/*?" component={SignUpPage} />}
+        <Route path="/tools/:slug" component={ToolPage} />
+        <Route path="/history" component={HistoryPage} />
+        <Route path="/favorites" component={FavoritesPage} />
+        <Route path="/analytics" component={AnalyticsPage} />
+        <Route path="/seo" component={SeoPage} />
+        <Route path="/admin" component={AdminPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
-function ClerkProviderWithRoutes() {
+/** Wraps the app with ClerkProvider when a publishable key is available. */
+function AppProviders() {
   const [, setLocation] = useLocation();
+
+  const core = (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AppRouter />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+
+  if (!hasClerk) return core;
 
   return (
     <ClerkProvider
-      publishableKey={clerkPubKey}
+      publishableKey={clerkPubKey!}
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
@@ -178,6 +193,8 @@ function ClerkProviderWithRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          {/* Cache invalidator must live inside ClerkProvider */}
+          <ClerkQueryClientCacheInvalidator />
           <AppRouter />
           <Toaster />
         </TooltipProvider>
@@ -190,7 +207,7 @@ function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
+        <AppProviders />
       </WouterRouter>
     </ThemeProvider>
   );
