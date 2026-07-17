@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
 import { db, favoritesTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, or, and, isNull } from "drizzle-orm";
 import {
   AddFavoriteBody,
   DeleteFavoriteParams,
   ListFavoritesQueryParams,
 } from "@workspace/api-zod";
+import { getOptionalUserId } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -16,25 +17,35 @@ router.get("/favorites", async (req, res): Promise<void> => {
     return;
   }
 
-  let rows = db
+  const userId = getOptionalUserId(req);
+  const sessionId = req.query.sessionId as string | undefined;
+
+  const ownerFilter = userId
+    ? eq(favoritesTable.userId, userId)
+    : sessionId
+      ? or(
+          eq(favoritesTable.sessionId, sessionId),
+          and(isNull(favoritesTable.userId), isNull(favoritesTable.sessionId)),
+        )
+      : isNull(favoritesTable.userId);
+
+  const toolFilter = query.data.toolSlug
+    ? eq(favoritesTable.toolSlug, query.data.toolSlug)
+    : undefined;
+
+  const where = toolFilter ? and(ownerFilter, toolFilter) : ownerFilter;
+
+  const results = await db
     .select()
     .from(favoritesTable)
+    .where(where)
     .orderBy(desc(favoritesTable.createdAt));
 
-  if (query.data.toolSlug) {
-    rows = db
-      .select()
-      .from(favoritesTable)
-      .where(eq(favoritesTable.toolSlug, query.data.toolSlug))
-      .orderBy(desc(favoritesTable.createdAt));
-  }
-
-  const results = await rows;
   res.json(
     results.map((r) => ({
       ...r,
       createdAt: r.createdAt.toISOString(),
-    }))
+    })),
   );
 });
 
@@ -45,9 +56,11 @@ router.post("/favorites", async (req, res): Promise<void> => {
     return;
   }
 
+  const userId = getOptionalUserId(req);
+
   const [entry] = await db
     .insert(favoritesTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, userId })
     .returning();
 
   res.status(201).json({
@@ -63,9 +76,18 @@ router.delete("/favorites/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const userId = getOptionalUserId(req);
+  const sessionId = req.query.sessionId as string | undefined;
+
+  const ownerFilter = userId
+    ? eq(favoritesTable.userId, userId)
+    : sessionId
+      ? eq(favoritesTable.sessionId, sessionId)
+      : isNull(favoritesTable.sessionId);
+
   const [deleted] = await db
     .delete(favoritesTable)
-    .where(eq(favoritesTable.id, params.data.id))
+    .where(and(eq(favoritesTable.id, params.data.id), ownerFilter))
     .returning();
 
   if (!deleted) {

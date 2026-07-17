@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
 import { db, historyTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, or, and, isNull } from "drizzle-orm";
 import {
   SaveHistoryBody,
   DeleteHistoryParams,
   ListHistoryQueryParams,
 } from "@workspace/api-zod";
+import { getOptionalUserId } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -17,28 +18,37 @@ router.get("/history", async (req, res): Promise<void> => {
   }
 
   const limit = query.data.limit ?? 50;
+  const userId = getOptionalUserId(req);
+  const sessionId = req.query.sessionId as string | undefined;
 
-  let rows = db
+  // Ownership filter: rows matching userId OR (no userId + matching sessionId)
+  const ownerFilter = userId
+    ? eq(historyTable.userId, userId)
+    : sessionId
+      ? or(
+          eq(historyTable.sessionId, sessionId),
+          and(isNull(historyTable.userId), isNull(historyTable.sessionId)),
+        )
+      : isNull(historyTable.userId);
+
+  const toolFilter = query.data.toolSlug
+    ? eq(historyTable.toolSlug, query.data.toolSlug)
+    : undefined;
+
+  const where = toolFilter ? and(ownerFilter, toolFilter) : ownerFilter;
+
+  const results = await db
     .select()
     .from(historyTable)
+    .where(where)
     .orderBy(desc(historyTable.createdAt))
     .limit(limit);
 
-  if (query.data.toolSlug) {
-    rows = db
-      .select()
-      .from(historyTable)
-      .where(eq(historyTable.toolSlug, query.data.toolSlug))
-      .orderBy(desc(historyTable.createdAt))
-      .limit(limit);
-  }
-
-  const results = await rows;
   res.json(
     results.map((r) => ({
       ...r,
       createdAt: r.createdAt.toISOString(),
-    }))
+    })),
   );
 });
 
@@ -49,7 +59,13 @@ router.post("/history", async (req, res): Promise<void> => {
     return;
   }
 
-  const [entry] = await db.insert(historyTable).values(parsed.data).returning();
+  const userId = getOptionalUserId(req);
+
+  const [entry] = await db
+    .insert(historyTable)
+    .values({ ...parsed.data, userId })
+    .returning();
+
   res.status(201).json({
     ...entry,
     createdAt: entry.createdAt.toISOString(),
@@ -63,9 +79,19 @@ router.delete("/history/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const userId = getOptionalUserId(req);
+  const sessionId = req.query.sessionId as string | undefined;
+
+  // Only delete rows the caller owns
+  const ownerFilter = userId
+    ? eq(historyTable.userId, userId)
+    : sessionId
+      ? eq(historyTable.sessionId, sessionId)
+      : isNull(historyTable.sessionId);
+
   const [deleted] = await db
     .delete(historyTable)
-    .where(eq(historyTable.id, params.data.id))
+    .where(and(eq(historyTable.id, params.data.id), ownerFilter))
     .returning();
 
   if (!deleted) {

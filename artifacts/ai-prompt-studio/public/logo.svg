@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <!-- Spark icon -->
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#g)"/>
+  <path d="M24 10 L28 20 L38 20 L30 27 L33 38 L24 31 L15 38 L18 27 L10 20 L20 20 Z" fill="white" opacity="0.9"/>
+  <!-- Wordmark -->
+  <text x="54" y="21" font-family="'Outfit', 'Inter', sans-serif" font-weight="700" font-size="14" fill="#f1f5f9" letter-spacing="-0.3">AI Prompt</text>
+  <text x="54" y="38" font-family="'Outfit', 'Inter', sans-serif" font-weight="400" font-size="12" fill="#94a3b8" letter-spacing="0.5">STUDIO</text>
+</svg>

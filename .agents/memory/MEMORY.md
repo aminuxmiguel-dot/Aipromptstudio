@@ -1,0 +1,1 @@
+- [Clerk Auth Setup](clerk-auth-setup.md) — Replit-managed Clerk provisioned; exact wiring rules for proxy, routes, and Tailwind v4 layer ordering.

@@ -11,6 +11,7 @@ export const favoritesTable = pgTable("prompt_favorites", {
   label: text("label"),
   qualityScore: integer("quality_score"),
   sessionId: text("session_id"),
+  userId: text("user_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

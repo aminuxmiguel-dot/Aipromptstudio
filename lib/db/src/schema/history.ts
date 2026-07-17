@@ -11,6 +11,7 @@ export const historyTable = pgTable("prompt_history", {
   qualityScore: integer("quality_score"),
   options: text("options"), // JSON-serialized
   sessionId: text("session_id"),
+  userId: text("user_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

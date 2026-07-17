@@ -1,40 +1,176 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useRef } from "react";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { publishableKeyFromHost } from '@clerk/react/internal';
+import { shadcn } from '@clerk/themes';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from 'next-themes';
-import NotFound from '@/pages/not-found';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
-
+import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import HomePage from './pages/HomePage';
 import ToolPage from './pages/ToolPage';
 import HistoryPage from './pages/HistoryPage';
 import FavoritesPage from './pages/FavoritesPage';
+import NotFound from './pages/not-found';
+
+// REQUIRED — copy verbatim
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+
+// REQUIRED — copy verbatim. Empty in dev (intentional), auto-set in prod.
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function stripBase(path: string): string {
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || "/"
+    : path;
+}
+
+if (!clerkPubKey) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
+}
+
+const clerkAppearance = {
+  theme: shadcn,
+  cssLayerName: "clerk",
+  options: {
+    logoPlacement: "inside" as const,
+    logoLinkUrl: basePath || "/",
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    socialButtonsVariant: "blockButton" as const,
+  },
+  variables: {
+    colorPrimary: "#8B5CF6",
+    colorForeground: "#f1f5f9",
+    colorMutedForeground: "#94a3b8",
+    colorDanger: "#ef4444",
+    colorBackground: "#0f0f1a",
+    colorInput: "#1e293b",
+    colorInputForeground: "#f1f5f9",
+    colorNeutral: "#334155",
+    fontFamily: "'Outfit', sans-serif",
+    borderRadius: "0.75rem",
+  },
+  elements: {
+    rootBox: "w-full flex justify-center",
+    cardBox: "bg-[#0f0f1a] border border-[#1e293b] rounded-2xl w-[440px] max-w-full overflow-hidden shadow-2xl shadow-violet-500/10",
+    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    headerTitle: "text-[#f1f5f9] font-bold text-2xl",
+    headerSubtitle: "text-[#94a3b8]",
+    socialButtonsBlockButtonText: "text-[#f1f5f9] font-medium",
+    socialButtonsBlockButton: "!border-[#334155] !bg-[#1e293b] hover:!bg-[#263548]",
+    formFieldLabel: "text-[#94a3b8] text-sm",
+    formFieldInput: "!bg-[#1e293b] !border-[#334155] !text-[#f1f5f9] focus:!border-[#8B5CF6]",
+    formButtonPrimary: "!bg-[#8B5CF6] hover:!bg-[#7C3AED] !text-white font-semibold",
+    footerActionLink: "!text-[#8B5CF6] hover:!text-[#7C3AED]",
+    footerActionText: "!text-[#94a3b8]",
+    footerAction: "!bg-transparent",
+    dividerText: "!text-[#94a3b8]",
+    dividerLine: "!bg-[#1e293b]",
+    identityPreviewEditButton: "!text-[#8B5CF6]",
+    formFieldSuccessText: "!text-emerald-400",
+    alertText: "!text-[#f1f5f9]",
+    alert: "!border-[#334155] !bg-[#1e293b]",
+    otpCodeFieldInput: "!border-[#334155] !bg-[#1e293b] !text-[#f1f5f9]",
+    logoBox: "mb-2",
+    logoImage: "h-10 w-auto",
+    formFieldRow: "gap-2",
+    main: "gap-4",
+  },
+};
+
+function ClerkQueryClientCacheInvalidator() {
+  const { addListener } = useClerk();
+  const queryClient = useQueryClient();
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    const unsubscribe = addListener(({ user }) => {
+      const userId = user?.id ?? null;
+      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
+        queryClient.clear();
+      }
+      prevUserIdRef.current = userId;
+    });
+    return unsubscribe;
+  }, [addListener, queryClient]);
+
+  return null;
+}
+
+function SignInPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
+      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+    </div>
+  );
+}
+
+function SignUpPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient();
 
-function Router() {
+function AppRouter() {
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/tools/:slug" component={ToolPage} />
-      <Route path="/history" component={HistoryPage} />
-      <Route path="/favorites" component={FavoritesPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <ClerkQueryClientCacheInvalidator />
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/sign-in/*?" component={SignInPage} />
+        <Route path="/sign-up/*?" component={SignUpPage} />
+        <Route path="/tools/:slug" component={ToolPage} />
+        <Route path="/history" component={HistoryPage} />
+        <Route path="/favorites" component={FavoritesPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
+  );
+}
+
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      appearance={clerkAppearance}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      localization={{
+        signIn: { start: { title: "Welcome back", subtitle: "Sign in to AI Prompt Studio" } },
+        signUp: { start: { title: "Create your account", subtitle: "Start generating premium prompts" } },
+      }}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+    >
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AppRouter />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
   );
 }
 
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
+      <WouterRouter base={basePath}>
+        <ClerkProviderWithRoutes />
+      </WouterRouter>
     </ThemeProvider>
   );
 }
