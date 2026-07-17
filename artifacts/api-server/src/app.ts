@@ -9,6 +9,7 @@ import {
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
+import sitemapRouter from "./routes/sitemap";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -25,9 +26,7 @@ app.use(
         };
       },
       res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
+        return { statusCode: res.statusCode };
       },
     },
   }),
@@ -40,8 +39,6 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Resolve publishable key from request host so one server can serve
-// multiple Clerk custom domains; falls back to CLERK_PUBLISHABLE_KEY.
 app.use(
   clerkMiddleware((req) => ({
     publishableKey: publishableKeyFromHost(
@@ -50,6 +47,9 @@ app.use(
     ),
   })),
 );
+
+// Sitemap at root level (not under /api)
+app.use(sitemapRouter);
 
 app.use("/api", router);
 

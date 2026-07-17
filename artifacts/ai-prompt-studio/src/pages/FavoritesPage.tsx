@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSEO } from "@/hooks/useSEO";
 
 function InlineConfirmDelete({ onConfirm, isDeleting }: { onConfirm: () => void, isDeleting: boolean }) {
   const [confirming, setConfirming] = useState(false);
@@ -59,9 +60,7 @@ function InlineConfirmDelete({ onConfirm, isDeleting }: { onConfirm: () => void,
 }
 
 export default function FavoritesPage() {
-  useEffect(() => {
-    document.title = "Favorites - AI Prompt Studio";
-  }, []);
+  useSEO({ title: "Saved Favorites — AI Prompt Studio", description: "Your best AI image prompts, saved and ready to reuse in Midjourney, DALL·E, and Stable Diffusion." });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();

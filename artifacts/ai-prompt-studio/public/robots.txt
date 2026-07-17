@@ -1,2 +1,10 @@
 User-agent: *
 Allow: /
+
+Sitemap: /sitemap.xml
+
+# Block auth pages from indexing
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /history
+Disallow: /favorites

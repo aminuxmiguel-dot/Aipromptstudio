@@ -14,6 +14,8 @@ import { getListHistoryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useToast } from "@/hooks/use-toast";
+import { useSEO } from "@/hooks/useSEO";
+import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 import { ModeSelector } from "@/components/tool/ModeSelector";
 import { ModifierGrid } from "@/components/tool/ModifierGrid";
@@ -44,8 +46,6 @@ export default function ToolPage() {
   // Set default mode and modifier when tool loads
   useEffect(() => {
     if (tool) {
-      document.title = `${tool.name} - AI Prompt Studio`;
-      
       if (tool.modes.length > 0 && !tool.modes.includes(selectedMode)) {
         setSelectedMode(tool.modes[0]);
       } else if (!selectedMode) {
@@ -60,6 +60,22 @@ export default function ToolPage() {
       setGeneratedResult(null);
     }
   }, [tool, slug]);
+
+  useSEO(tool ? {
+    title: `${tool.name} — Free AI Prompt Generator | AI Prompt Studio`,
+    description: `Generate professional ${tool.name.toLowerCase()} prompts instantly. No AI API key required. Choose from ${tool.modes.length} quality modes and ${tool.modifiers.length} style modifiers.`,
+    ogType: "website",
+    twitterCard: "summary_large_image",
+  } : {
+    title: "AI Prompt Generator — AI Prompt Studio",
+    description: "Generate professional AI image prompts for Midjourney, DALL·E, and Stable Diffusion. No API key needed.",
+  });
+
+  usePageAnalytics({
+    eventType: "page_view",
+    toolSlug: slug || undefined,
+    sessionId,
+  });
 
   const handleGenerate = (options: Record<string, string>) => {
     if (!slug) return;
@@ -157,6 +173,27 @@ export default function ToolPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {tool && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": tool.name,
+              "description": tool.description,
+              "applicationCategory": "UtilitiesApplication",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "featureList": tool.modifiers.join(", "),
+            })
+          }}
+        />
+      )}
       <Header />
       
       <main className="flex-1">

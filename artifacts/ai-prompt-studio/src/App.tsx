@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, lazy, Suspense } from "react";
+import { Loader2 } from 'lucide-react';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -7,11 +8,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from 'next-themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
-import HomePage from './pages/HomePage';
-import ToolPage from './pages/ToolPage';
-import HistoryPage from './pages/HistoryPage';
-import FavoritesPage from './pages/FavoritesPage';
-import NotFound from './pages/not-found';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const ToolPage = lazy(() => import('./pages/ToolPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const NotFound = lazy(() => import('./pages/not-found'));
 
 // REQUIRED — copy verbatim
 const clerkPubKey = publishableKeyFromHost(
@@ -119,21 +121,34 @@ function SignUpPage() {
   );
 }
 
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 const queryClient = new QueryClient();
 
 function AppRouter() {
   return (
     <>
       <ClerkQueryClientCacheInvalidator />
-      <Switch>
-        <Route path="/" component={HomePage} />
-        <Route path="/sign-in/*?" component={SignInPage} />
-        <Route path="/sign-up/*?" component={SignUpPage} />
-        <Route path="/tools/:slug" component={ToolPage} />
-        <Route path="/history" component={HistoryPage} />
-        <Route path="/favorites" component={FavoritesPage} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<PageLoader />}>
+        <Switch>
+          <Route path="/" component={HomePage} />
+          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/tools/:slug" component={ToolPage} />
+          <Route path="/history" component={HistoryPage} />
+          <Route path="/favorites" component={FavoritesPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </>
   );
 }
