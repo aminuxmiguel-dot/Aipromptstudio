@@ -21,6 +21,7 @@ export function Header() {
     { href: "/tools/packaging-prompt", label: "Packaging" },
     { href: "/history", label: "History" },
     { href: "/favorites", label: "Favorites" },
+    { href: "/analytics", label: "Analytics" },
   ];
 
   const getInitial = () => {
@@ -46,8 +47,8 @@ export function Header() {
 
           <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             {navItems.map((item) => (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 className={`transition-colors hover:text-foreground ${
                   location === item.href ? "text-foreground" : ""
@@ -84,9 +85,9 @@ export function Header() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
                 {getInitial()}
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => signOut({ redirectUrl: basePath || "/" })}
                 className="h-8 px-3 text-muted-foreground hover:text-foreground"
               >
@@ -111,8 +112,8 @@ export function Header() {
         <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl absolute top-16 left-0 w-full p-4 shadow-lg flex flex-col gap-4">
           <nav className="flex flex-col gap-3 text-sm font-medium">
             {navItems.map((item) => (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 className={`transition-colors p-2 rounded-md hover:bg-muted ${
                   location === item.href ? "bg-muted/50 text-foreground" : "text-muted-foreground"
@@ -123,12 +124,12 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          
+
           <div className="flex items-center gap-2 px-2 py-2 border-t border-border/40">
             <span className="text-sm font-medium text-muted-foreground mr-auto">Theme</span>
             <ThemeToggle />
           </div>
-          
+
           <div className="pt-2 flex flex-col gap-2 border-t border-border/40">
             <Show when="signed-out">
               <Link href="/sign-in" onClick={() => setIsMobileMenuOpen(false)}>
@@ -142,7 +143,7 @@ export function Header() {
                 </Button>
               </Link>
             </Show>
-            
+
             <Show when="signed-in">
               <div className="flex items-center justify-between px-2 py-1">
                 <div className="flex items-center gap-3">
@@ -153,9 +154,9 @@ export function Header() {
                     {user?.firstName || user?.primaryEmailAddress?.emailAddress || "Account"}
                   </span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     signOut({ redirectUrl: basePath || "/" });
                     setIsMobileMenuOpen(false);

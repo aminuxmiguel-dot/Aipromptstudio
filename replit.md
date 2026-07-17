@@ -59,7 +59,7 @@ Each tool supports 4 prompt modes (Minimal / Premium / Creative / Luxury) and mu
 - **Phase 2** — Prompt Engine UI: first tool (Logo) fully interactive with generation UI, LocalStorage
 - **Phase 3** — Remaining 4 tool plugins with full generation UIs
 - **Phase 4** — Authentication (Clerk/Google), DB sync for authenticated users
-- **Phase 5** — SEO center, analytics, ads integration, performance optimization
+- **Phase 5** ✅ SEO center, analytics, ads integration, performance optimization
 - **Phase 6** — Admin dashboard, production deployment
 
 ## User preferences
@@ -68,6 +68,19 @@ Each tool supports 4 prompt modes (Minimal / Premium / Creative / Luxury) and mu
 - Files must stay under 400 lines each — refactor before adding more
 - No TODO placeholders — if a feature can't be completed, explain why
 - No native PostgreSQL ENUMs — use text columns with string mappings
+
+## Phase 5 additions
+
+- `GET /robots.txt` — served at root by API server (`artifacts/api-server/src/routes/seo.ts`)
+- `GET /api/seo/audit` — live SEO audit JSON (`artifacts/api-server/src/routes/seo.ts`)
+- `/analytics` — platform usage dashboard (recharts, fetches `/api/stats` + `/api/analytics/summary`)
+- `/seo` — SEO Center dashboard (fetches `/api/seo/audit`)
+- `components/ads/AdSlot.tsx` — Google AdSense slot (needs `VITE_ADSENSE_PUBLISHER_ID` env var to go live; shows placeholder in dev when absent)
+- `hooks/useWebVitals.ts` — CLS, LCP, FCP, TTFB, INP tracked via PerformanceObserver, forwarded to `/api/analytics/track` as `web_vital` events
+- `hooks/useSEO.ts` — extended with `ogImage`, `ogUrl`, `structuredData` (JSON-LD)
+- HTTP gzip compression via `compression` middleware on Express
+- Cache-Control headers: tools (5 min), stats (1 min), analytics summary (2 min)
+- `VITE_ADSENSE_PUBLISHER_ID` — optional env var for Google AdSense publisher ID
 
 ## Gotchas
 

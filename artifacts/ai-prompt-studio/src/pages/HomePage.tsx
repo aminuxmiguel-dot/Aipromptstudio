@@ -11,6 +11,7 @@ import { FaqSection } from "@/components/home/FaqSection";
 import { CtaSection } from "@/components/home/CtaSection";
 import { useSEO } from "@/hooks/useSEO";
 import { usePageAnalytics } from "@/hooks/usePageAnalytics";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export default function HomePage() {
   useSEO({
@@ -26,6 +27,10 @@ export default function HomePage() {
       <Header />
       <main className="flex-1 flex flex-col">
         <HeroSection />
+        {/* Leaderboard ad slot — below hero, above feature cards */}
+        <div className="container max-w-screen-xl mx-auto px-4 py-4 flex justify-center">
+          <AdSlot slotId="homepage-leaderboard" format="leaderboard" responsive />
+        </div>
         <FeatureCards />
         <ToolsSection />
         <HowItWorks />

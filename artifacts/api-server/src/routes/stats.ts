@@ -27,12 +27,14 @@ router.get("/stats", async (_req, res): Promise<void> => {
 
   const topToolSlug = toolCounts[0]?.toolSlug ?? null;
 
-  res.json({
-    totalPromptsGenerated: historyCount?.count ?? 0,
-    totalFavorites: favoritesCount?.count ?? 0,
-    totalToolsAvailable: getAllTools().length,
-    topToolSlug,
-  });
+  res
+    .set("Cache-Control", "public, max-age=60, stale-while-revalidate=30")
+    .json({
+      totalPromptsGenerated: historyCount?.count ?? 0,
+      totalFavorites: favoritesCount?.count ?? 0,
+      totalToolsAvailable: getAllTools().length,
+      topToolSlug,
+    });
 });
 
 export default router;

@@ -2,20 +2,66 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>AI Prompt Studio</title>
-    <meta name="description" content="AI Prompt Studio — built on Replit. Update this description to reflect the app." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5" />
+    <title>AI Prompt Studio — Free AI Prompt Generator for Midjourney & DALL·E</title>
+    <meta name="description" content="Generate professional AI image prompts instantly with our Smart Modular Prompt Engine. No AI API key required. 5 specialized tools, 4 quality modes, 100% free." />
     <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="AI Prompt Studio" />
-    <meta property="og:description" content="AI Prompt Studio — built on Replit. Update this description to reflect the app." />
+    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content="AI Prompt Studio" />
+    <meta name="keywords" content="AI prompt generator, Midjourney prompts, DALL-E prompts, Stable Diffusion, logo prompt, product photo prompt, AI portrait, YouTube thumbnail" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="AI Prompt Studio — Free AI Prompt Generator" />
+    <meta property="og:description" content="Generate professional AI image prompts instantly. 5 specialized tools, 4 quality modes, 100% free. No AI API key required." />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AI Prompt Studio" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="AI Prompt Studio" />
-    <meta name="twitter:description" content="AI Prompt Studio — built on Replit. Update this description to reflect the app." />
+    <meta name="twitter:title" content="AI Prompt Studio — Free AI Prompt Generator" />
+    <meta name="twitter:description" content="Generate professional AI image prompts instantly. 5 specialized tools, 4 quality modes, 100% free." />
+    <meta name="twitter:creator" content="@AIPromptStudio" />
+
+    <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- DNS prefetch & preconnect for critical origins -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Outfit font with display=swap for performance -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Site-level JSON-LD structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "AI Prompt Studio",
+      "description": "The premium creative toolkit for designers, marketers, and content creators. Generate pixel-perfect prompts for any AI image model.",
+      "url": "https://ai-prompt-studio.repl.co",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://ai-prompt-studio.repl.co/tools/{tool_slug}"
+        },
+        "query-input": "required name=tool_slug"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

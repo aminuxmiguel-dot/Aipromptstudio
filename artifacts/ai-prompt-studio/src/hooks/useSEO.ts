@@ -6,8 +6,11 @@ interface SEOProps {
   canonical?: string;
   ogTitle?: string;
   ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
   ogType?: "website" | "article";
   twitterCard?: "summary" | "summary_large_image";
+  structuredData?: Record<string, unknown>;
 }
 
 export function useSEO(props: SEOProps): void {
@@ -17,65 +20,85 @@ export function useSEO(props: SEOProps): void {
     canonical,
     ogTitle = props.title,
     ogDescription = props.description,
+    ogImage,
+    ogUrl,
     ogType = "website",
     twitterCard = "summary_large_image",
+    structuredData,
   } = props;
 
   const addedTags = useRef<HTMLElement[]>([]);
 
   useEffect(() => {
-    // Set document title
     document.title = title;
 
-    const setTag = (tagType: 'meta' | 'link', attrs: Record<string, string>) => {
-      // Find existing
-      let existing: HTMLElement | null = null;
-      if (tagType === 'meta') {
-        const nameAttr = attrs.name ? `name="${attrs.name}"` : `property="${attrs.property}"`;
-        existing = document.querySelector(`meta[${nameAttr}]`);
-      } else if (tagType === 'link') {
-        existing = document.querySelector(`link[rel="${attrs.rel}"]`);
-      }
-
-      if (existing) {
-        // Update
-        if (tagType === 'meta') {
-          existing.setAttribute('content', attrs.content);
-        } else if (tagType === 'link') {
-          existing.setAttribute('href', attrs.href);
-        }
+    const setMeta = (key: "name" | "property", keyValue: string, content: string) => {
+      let el = document.querySelector<HTMLMetaElement>(`meta[${key}="${keyValue}"]`);
+      if (el) {
+        el.setAttribute("content", content);
       } else {
-        // Create
-        const el = document.createElement(tagType);
-        Object.entries(attrs).forEach(([key, value]) => {
-          el.setAttribute(key, value);
-        });
+        el = document.createElement("meta");
+        el.setAttribute(key, keyValue);
+        el.setAttribute("content", content);
         document.head.appendChild(el);
         addedTags.current.push(el);
       }
     };
 
-    setTag('meta', { name: 'description', content: description });
-    setTag('meta', { property: 'og:title', content: ogTitle });
-    setTag('meta', { property: 'og:description', content: ogDescription });
-    setTag('meta', { property: 'og:type', content: ogType });
-    setTag('meta', { property: 'og:site_name', content: 'AI Prompt Studio' });
-    setTag('meta', { name: 'twitter:card', content: twitterCard });
-    setTag('meta', { name: 'twitter:title', content: ogTitle });
-    setTag('meta', { name: 'twitter:description', content: ogDescription });
+    const setLink = (rel: string, href: string) => {
+      let el = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+      if (el) {
+        el.setAttribute("href", href);
+      } else {
+        el = document.createElement("link");
+        el.setAttribute("rel", rel);
+        el.setAttribute("href", href);
+        document.head.appendChild(el);
+        addedTags.current.push(el);
+      }
+    };
 
-    if (canonical) {
-      setTag('link', { rel: 'canonical', href: canonical });
+    // Core
+    setMeta("name", "description", description);
+
+    // Open Graph
+    setMeta("property", "og:title", ogTitle);
+    setMeta("property", "og:description", ogDescription);
+    setMeta("property", "og:type", ogType);
+    setMeta("property", "og:site_name", "AI Prompt Studio");
+    if (ogImage) setMeta("property", "og:image", ogImage);
+    if (ogUrl) setMeta("property", "og:url", ogUrl);
+
+    // Twitter / X Cards
+    setMeta("name", "twitter:card", twitterCard);
+    setMeta("name", "twitter:title", ogTitle);
+    setMeta("name", "twitter:description", ogDescription);
+    if (ogImage) setMeta("name", "twitter:image", ogImage);
+
+    // Canonical
+    if (canonical) setLink("canonical", canonical);
+
+    // JSON-LD structured data
+    const existingScript = document.head.querySelector("script[data-seo-ld]");
+    if (structuredData) {
+      if (existingScript) {
+        existingScript.textContent = JSON.stringify(structuredData);
+      } else {
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.setAttribute("data-seo-ld", "true");
+        script.textContent = JSON.stringify(structuredData);
+        document.head.appendChild(script);
+        addedTags.current.push(script);
+      }
+    } else if (existingScript) {
+      existingScript.remove();
     }
 
     return () => {
       document.title = "AI Prompt Studio";
-      addedTags.current.forEach(el => {
-        if (el.parentNode) {
-          el.parentNode.removeChild(el);
-        }
-      });
+      addedTags.current.forEach((el) => el.parentNode?.removeChild(el));
       addedTags.current = [];
     };
-  }, [title, description, canonical, ogTitle, ogDescription, ogType, twitterCard]);
+  }, [title, description, canonical, ogTitle, ogDescription, ogImage, ogUrl, ogType, twitterCard, structuredData]);
 }

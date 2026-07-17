@@ -4,6 +4,8 @@ import { GetToolParams } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
+const TOOLS_CACHE = "public, max-age=300, stale-while-revalidate=60";
+
 router.get("/tools", (_req, res): void => {
   const tools = getAllTools().map((tool) => ({
     slug: tool.slug,
@@ -15,7 +17,7 @@ router.get("/tools", (_req, res): void => {
     modes: tool.modes,
     seoContent: tool.seoContent,
   }));
-  res.json(tools);
+  res.set("Cache-Control", TOOLS_CACHE).json(tools);
 });
 
 router.get("/tools/:slug", (req, res): void => {
@@ -31,7 +33,7 @@ router.get("/tools/:slug", (req, res): void => {
     return;
   }
 
-  res.json({
+  res.set("Cache-Control", TOOLS_CACHE).json({
     slug: tool.slug,
     name: tool.name,
     description: tool.description,

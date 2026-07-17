@@ -1,4 +1,5 @@
 import { useEffect, useRef, lazy, Suspense } from "react";
+import { useWebVitals } from "@/hooks/useWebVitals";
 import { Loader2 } from 'lucide-react';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
@@ -13,6 +14,8 @@ const HomePage = lazy(() => import('./pages/HomePage'));
 const ToolPage = lazy(() => import('./pages/ToolPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const SeoPage = lazy(() => import('./pages/SeoPage'));
 const NotFound = lazy(() => import('./pages/not-found'));
 
 // REQUIRED — copy verbatim
@@ -135,6 +138,7 @@ function PageLoader() {
 const queryClient = new QueryClient();
 
 function AppRouter() {
+  useWebVitals();
   return (
     <>
       <ClerkQueryClientCacheInvalidator />
@@ -146,6 +150,8 @@ function AppRouter() {
           <Route path="/tools/:slug" component={ToolPage} />
           <Route path="/history" component={HistoryPage} />
           <Route path="/favorites" component={FavoritesPage} />
+          <Route path="/analytics" component={AnalyticsPage} />
+          <Route path="/seo" component={SeoPage} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>

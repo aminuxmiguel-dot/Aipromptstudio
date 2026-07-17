@@ -5,7 +5,12 @@ import { getOptionalUserId } from "../lib/auth";
 
 const router: IRouter = Router();
 
-const VALID_EVENT_TYPES = ["page_view", "tool_generation", "favorite_saved"] as const;
+const VALID_EVENT_TYPES = [
+  "page_view",
+  "tool_generation",
+  "favorite_saved",
+  "web_vital",
+] as const;
 
 router.post("/analytics/track", async (req, res): Promise<void> => {
   const { eventType, toolSlug, mode, sessionId, referrer } = req.body ?? {};
@@ -63,12 +68,14 @@ router.get("/analytics/summary", async (_req, res): Promise<void> => {
     .groupBy(sql`date_trunc('day', created_at)`)
     .orderBy(sql`date_trunc('day', created_at)`);
 
-  res.json({
-    pageViews30d: pageViews?.count ?? 0,
-    generations30d: generations?.count ?? 0,
-    topTools,
-    dailyTrend: trend,
-  });
+  res
+    .set("Cache-Control", "public, max-age=120, stale-while-revalidate=60")
+    .json({
+      pageViews30d: pageViews?.count ?? 0,
+      generations30d: generations?.count ?? 0,
+      topTools,
+      dailyTrend: trend,
+    });
 });
 
 export default router;

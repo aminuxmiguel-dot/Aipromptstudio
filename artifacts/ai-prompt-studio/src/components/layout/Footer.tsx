@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="border-t border-border/40 bg-background/50 py-12 md:py-16">
       <div className="container max-w-screen-2xl mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
-          
+
           <div className="space-y-4 md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -20,13 +20,13 @@ export function Footer() {
               The premium creative toolkit for designers, marketers, and content creators. Generate pixel-perfect prompts for any AI image model.
             </p>
             <div className="flex items-center gap-4 pt-2">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="#" aria-label="Twitter / X" className="text-muted-foreground hover:text-primary transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="#" aria-label="GitHub" className="text-muted-foreground hover:text-primary transition-colors">
                 <Github className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
@@ -48,8 +48,8 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/history" className="hover:text-primary transition-colors">My History</Link></li>
               <li><Link href="/favorites" className="hover:text-primary transition-colors">Favorites</Link></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Pricing</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">API Access</a></li>
+              <li><Link href="/analytics" className="hover:text-primary transition-colors">Analytics</Link></li>
+              <li><Link href="/seo" className="hover:text-primary transition-colors">SEO Center</Link></li>
             </ul>
           </div>
 
@@ -67,7 +67,10 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} AI Prompt Studio. All rights reserved.</p>
-          <p className="flex items-center gap-1">Crafted with precision.</p>
+          <p>
+            <a href="/sitemap.xml" className="hover:text-primary transition-colors mr-4">Sitemap</a>
+            <a href="/robots.txt" className="hover:text-primary transition-colors">robots.txt</a>
+          </p>
         </div>
       </div>
     </footer>

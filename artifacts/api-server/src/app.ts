@@ -1,3 +1,4 @@
+import compression from "compression";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -10,9 +11,13 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import sitemapRouter from "./routes/sitemap";
+import seoRouter from "./routes/seo";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+// Gzip/deflate compression — reduces JSON payload sizes by 60-80 %
+app.use(compression());
 
 app.use(
   pinoHttp({
@@ -48,8 +53,9 @@ app.use(
   })),
 );
 
-// Sitemap at root level (not under /api)
+// Root-level routes: sitemap, robots.txt, /api/seo/audit
 app.use(sitemapRouter);
+app.use(seoRouter);
 
 app.use("/api", router);
 
