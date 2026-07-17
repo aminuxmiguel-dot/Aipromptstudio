@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Prompt Studio API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tools
+    description: Prompt tool operations
+  - name: prompts
+    description: Prompt generation and history
+  - name: favorites
+    description: Favorite prompts
+  - name: stats
+    description: Platform statistics
+
 paths:
   /healthz:
     get:
@@ -24,6 +33,202 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /tools:
+    get:
+      operationId: listTools
+      tags: [tools]
+      summary: List all prompt tools
+      description: Returns all available prompt generator tools
+      responses:
+        "200":
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+
+  /tools/{slug}:
+    get:
+      operationId: getTool
+      tags: [tools]
+      summary: Get a single tool
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tool detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+        "404":
+          description: Tool not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /prompts/generate:
+    post:
+      operationId: generatePrompt
+      tags: [prompts]
+      summary: Generate a prompt
+      description: Generates a prompt using the modular template engine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptGenerateInput"
+      responses:
+        "200":
+          description: Generated prompt result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedPrompt"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /history:
+    get:
+      operationId: listHistory
+      tags: [prompts]
+      summary: List prompt history
+      parameters:
+        - name: toolSlug
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Prompt history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryEntry"
+
+    post:
+      operationId: saveHistory
+      tags: [prompts]
+      summary: Save a prompt to history
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HistoryInput"
+      responses:
+        "201":
+          description: Saved history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryEntry"
+
+  /history/{id}:
+    delete:
+      operationId: deleteHistory
+      tags: [prompts]
+      summary: Delete a history entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /favorites:
+    get:
+      operationId: listFavorites
+      tags: [favorites]
+      summary: List favorite prompts
+      parameters:
+        - name: toolSlug
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of favorites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FavoriteEntry"
+
+    post:
+      operationId: addFavorite
+      tags: [favorites]
+      summary: Add a prompt to favorites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FavoriteInput"
+      responses:
+        "201":
+          description: Created favorite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavoriteEntry"
+
+  /favorites/{id}:
+    delete:
+      operationId: deleteFavorite
+      tags: [favorites]
+      summary: Remove a favorite
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Platform statistics
+      description: Returns aggregate stats (total prompts generated, favorites, tools used)
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +239,209 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Tool:
+      type: object
+      required: [slug, name, description, category, modifiers, modes, seoContent]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        icon:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string
+        modes:
+          type: array
+          items:
+            type: string
+        seoContent:
+          type: string
+
+    PromptGenerateInput:
+      type: object
+      required: [toolSlug, mode, options]
+      properties:
+        toolSlug:
+          type: string
+          description: "Slug of the tool: logo-prompt, product-photo-prompt, portrait-prompt, youtube-thumbnail-prompt, packaging-prompt"
+        mode:
+          type: string
+          description: "Prompt mode: minimal, premium, creative, luxury"
+        options:
+          type: object
+          description: Tool-specific generation options (dynamic key/value pairs)
+          additionalProperties:
+            type: string
+        sessionId:
+          type: ["string", "null"]
+          description: Optional session ID for anonymous tracking
+
+    GeneratedPrompt:
+      type: object
+      required: [prompt, qualityScore, toolSlug, mode]
+      properties:
+        prompt:
+          type: string
+        negativePrompt:
+          type: ["string", "null"]
+        qualityScore:
+          $ref: "#/components/schemas/QualityScore"
+        toolSlug:
+          type: string
+        mode:
+          type: string
+        fragments:
+          $ref: "#/components/schemas/PromptFragments"
+
+    QualityScore:
+      type: object
+      required: [score, strengths, weaknesses, suggestions, commercialReadiness]
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        commercialReadiness:
+          type: string
+          description: "Rating: low, medium, high"
+
+    PromptFragments:
+      type: object
+      properties:
+        introduction:
+          type: ["string", "null"]
+        style:
+          type: ["string", "null"]
+        composition:
+          type: ["string", "null"]
+        lighting:
+          type: ["string", "null"]
+        boosters:
+          type: ["string", "null"]
+        negativePrompt:
+          type: ["string", "null"]
+
+    HistoryEntry:
+      type: object
+      required: [id, toolSlug, mode, prompt, createdAt]
+      properties:
+        id:
+          type: integer
+        toolSlug:
+          type: string
+        mode:
+          type: string
+        prompt:
+          type: string
+        negativePrompt:
+          type: ["string", "null"]
+        qualityScore:
+          type: ["integer", "null"]
+        options:
+          type: ["string", "null"]
+          description: JSON-serialized options
+        sessionId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    HistoryInput:
+      type: object
+      required: [toolSlug, mode, prompt]
+      properties:
+        toolSlug:
+          type: string
+        mode:
+          type: string
+        prompt:
+          type: string
+        negativePrompt:
+          type: ["string", "null"]
+        qualityScore:
+          type: ["integer", "null"]
+        options:
+          type: ["string", "null"]
+        sessionId:
+          type: ["string", "null"]
+
+    FavoriteEntry:
+      type: object
+      required: [id, toolSlug, mode, prompt, createdAt]
+      properties:
+        id:
+          type: integer
+        toolSlug:
+          type: string
+        mode:
+          type: string
+        prompt:
+          type: string
+        negativePrompt:
+          type: ["string", "null"]
+        label:
+          type: ["string", "null"]
+        qualityScore:
+          type: ["integer", "null"]
+        sessionId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    FavoriteInput:
+      type: object
+      required: [toolSlug, mode, prompt]
+      properties:
+        toolSlug:
+          type: string
+        mode:
+          type: string
+        prompt:
+          type: string
+        negativePrompt:
+          type: ["string", "null"]
+        label:
+          type: ["string", "null"]
+        qualityScore:
+          type: ["integer", "null"]
+        sessionId:
+          type: ["string", "null"]
+
+    PlatformStats:
+      type: object
+      required: [totalPromptsGenerated, totalFavorites, totalToolsAvailable, topToolSlug]
+      properties:
+        totalPromptsGenerated:
+          type: integer
+        totalFavorites:
+          type: integer
+        totalToolsAvailable:
+          type: integer
+        topToolSlug:
+          type: ["string", "null"]
